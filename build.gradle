@@ -13,20 +13,41 @@
  */
 
 plugins {
-    // Apply the java plugin to add support for Java
     id 'java'
-
-    // Apply the application plugin to add support for building a CLI application.
     id 'application'
+    id 'maven-publish'
+    id 'com.palantir.git-version' version '0.12.2'
+}
+
+publishing {
+   publications {
+        group 'org.thinkit.generator'
+        version = gitVersion()
+
+        gpr(MavenPublication) {
+            from(components.java)
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/myConsciousness/content-generator")
+            credentials {
+                username = System.getenv("GITHUB_USER")
+                password = System.getenv("GITHUB_PUBLISH_TOKEN")
+            }
+        }
+    }
 }
 
 repositories {
     maven {
         name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/myConsciousness/json-formatter")
+        url = uri("https://maven.pkg.github.com/myConsciousness/content-generator")
         credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-            password = project.findProperty("gpr.token") ?: System.getenv("TOKEN")
+            username = System.getenv("GITHUB_USER")
+            password = System.getenv("GITHUB_DOWNLOAD_PACKAGE_TOKEN")
         }
     }
 
@@ -55,41 +76,37 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.12'
 	annotationProcessor 'org.projectlombok:lombok:1.18.12'
 
-    dependencies {
-        compile 'com.google.googlejavaformat:google-java-format:1.8'
-    }
-
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.11.0'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.11.0'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.11.0'
-
-    compile group: 'org.apache.poi', name : 'poi', version: '4.1.2'
-	compile(group: 'org.apache.poi', name : 'poi-ooxml', version: '4.1.2') {
-	exclude group: 'stax', module: 'stax-api'
-	}
-
-    compile fileTree(dir: 'libs', include: '*.jar')
+    implementation 'org.thinkit.common:dev-utils:v1.0.0-5-g7db55aa'
+    implementation 'org.thinkit.framework.content:content-framework:v1.0.1'
+    implementation 'org.thinkit.generator.common:generator-commons:v1.0.0-5-gcabe9e1'
+    implementation 'org.thinkit.generator.workbook.common:generator-commons-workbook:v1.0.0-19-g94f7315'
 }
 
 application {
-    mainClassName = 'org.thinkit.generator.Main'
+    mainClassName = 'org.thinkit.generator.EntryContentGenerator'
 }
 
 run {
-    if (project.hasProperty('generatorCategory')) {
-        args project.generatorCategory
-    } else {
-        args "0"
-    }
-
     if (project.hasProperty('filePath')) {
         args project.filePath
+    } else {
+        args ".\\template\\content-definition-version-project-function.xlsx"
     }
 
     if (project.hasProperty('outputPath')) {
         args project.outputPath
     } else {
-        args ""
+
+        def output = "\\desktop"
+        def osname = System.getProperty("os.name");
+
+        if(osname.indexOf("Windows") >= 0){
+            args System.getenv("USERPROFILE") + output
+        } else if(osname.indexOf("Mac") >= 0){
+            args System.getenv("HOME") + output
+        } else {
+            args System.getenv("HOME") + output
+        }
     }
 }
 
