@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.thinkit.generator.vo.content;
+package org.thinkit.generator.content.content.entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;

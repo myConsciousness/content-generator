@@ -17,13 +17,10 @@ package org.thinkit.generator;
 import com.google.common.flogger.FluentLogger;
 
 import org.apache.commons.lang3.StringUtils;
-import org.thinkit.common.catalog.Catalog;
-import org.thinkit.generator.common.Generator;
-import org.thinkit.generator.common.catalog.GeneratorDivision;
+import org.thinkit.generator.workbook.common.DefinitionPath;
 
 /**
- * Generatorプロジェクトのエントリーポイントクラスです。<br>
- * コマンドライン引数として渡された各データから業務に応じた生成器を判断して起動します。<br>
+ * コンテンツ生成器のエントリーポイントクラスです。
  *
  * @author Kato Shinya
  * @since 1.0
@@ -31,7 +28,7 @@ import org.thinkit.generator.common.catalog.GeneratorDivision;
  *
  * @see #main()
  */
-final class Main {
+final class EntryContentGenerator {
 
     /**
      * ログ出力オブジェクト
@@ -39,49 +36,37 @@ final class Main {
     private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
     /**
-     * Generatorプロジェクトで使用する各生成器をコマンドライン引数から判定し起動します。
+     * 引数として渡された定義書のパスを基にコンテンツ生成器を実行します。
      * <p>
      *
      * <pre>
-     * 各生成器が処理を開始するために以下のコマンドライン引数が必要になります。
-     * 1. 生成器区分 → {@link GeneratorDivision} 起動する対象の生成器区分です。（必須）
-     * 2. ファイルパス → 各生成器が解析する対象の情報が記述されたファイルへのパスです。(必須)
-     * 3, 出力先パス → 生成された情報を出力する領域のパスです。(任意)<br>
+     * コンテンツ生成器が処理を開始するために以下のコマンドライン引数が必要になります。
+     * 1. ファイルパス → 各生成器が解析する対象の情報が記述されたファイルへのパスです。(必須)
+     * 2, 出力先パス → 生成された情報を出力する領域のパスです。(任意)
      * </pre>
      *
      * <p>
      * 各生成器の実行に必要なコマンドライン引数が渡されなかった場合は当メイン処理の実行時に必ず失敗します。
      *
      * @param args コマンドライン引数
-     * @exception IllegalArgumentException 生成器の実行に必要な引数が渡されなかった場合
+     *
+     * @exception IllegalArgumentException コンテンツ生成器の実行に必要な引数が渡されなかった場合
      */
     public static void main(String[] args) {
 
-        if (args.length < 2) {
+        if (args.length < 1) {
             logger.atSevere().log("Necessary to pass command line arguments in order to execute the process.");
             throw new IllegalArgumentException(String.format(
-                    "wrong parameter was given. 2 parameter was expected but %s parameters were given.", args.length));
+                    "wrong parameter was given. At least 1 parameter was expected but %s parameters were given.",
+                    args.length));
         }
 
-        final int generatorDivisionCode = Integer.parseInt(args[0]);
-        final String filePath = args[1];
-        final String outputPath = argumentOrDefault(args, 2);
+        final String filePath = args[0];
+        final String outputPath = argumentOrDefault(args, 1);
 
-        if (!Catalog.hasCode(GeneratorDivision.class, generatorDivisionCode)) {
-            logger.atSevere().log("An incorrect number was passed as a code value for GeneratorDivision.");
-            throw new IllegalArgumentException(
-                    "The code values passed as command line arguments are not defined in GeneratorDivision.");
-        }
+        logger.atFinest().log("The file path passed as command line argument = (%s)", filePath);
 
-        final GeneratorDivision generatorDivision = Catalog.getEnum(GeneratorDivision.class, generatorDivisionCode);
-
-        logger.atInfo().log("The file path passed as command line argument = (%s)", filePath);
-        logger.atInfo().log("The generator division passed as command line argument = (%s)", generatorDivision);
-
-        final Generator generator = GeneratorFactory.getInstance().create(generatorDivision,
-                DefinitionPath.of(filePath, outputPath));
-
-        if (!generator.execute()) {
+        if (!ContentGenerator.of(DefinitionPath.of(filePath, outputPath)).execute()) {
             logger.atSevere().log("An unexpected error has occurred.");
             return;
         }

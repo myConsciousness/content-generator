@@ -14,9 +14,9 @@
 
 package org.thinkit.generator;
 
-import org.thinkit.common.catalog.Extension;
-import org.thinkit.common.util.file.FluentFile;
-import org.thinkit.generator.content.dto.rule.DtoResourceFacade;
+import org.thinkit.generator.common.Generator;
+import org.thinkit.generator.workbook.common.AbstractGenerator;
+import org.thinkit.generator.workbook.common.DefinitionPath;
 
 import lombok.NonNull;
 
@@ -33,19 +33,28 @@ public final class ContentGenerator extends AbstractGenerator {
      * コンストラクタ
      *
      * @param definitionPath 生成するパスを管理するオブジェクト
+     *
+     * @exception NullPointerException 引数として {@code null} が渡された場合
      */
-    public ContentGenerator(@NonNull DefinitionPath definitionPath) {
+    private ContentGenerator(@NonNull DefinitionPath definitionPath) {
         super(definitionPath);
+    }
+
+    /**
+     * 引数として渡された {@code definitionPath} を基に {@link ContentGenerator}
+     * クラスの新しいインスタンスを生成し返却します。
+     *
+     * @param definitionPath 生成するパスを管理するオブジェクト
+     * @return {@link ContentGenerator} クラスの新しいインスタンス
+     *
+     * @exception NullPointerException 引数として {@code null} が渡された場合
+     */
+    public static Generator of(@NonNull DefinitionPath definitionPath) {
+        return new ContentGenerator(definitionPath);
     }
 
     @Override
     protected boolean run() {
-
-        DtoResourceFacade.createResource(super.getFilePath()).forEach(dtoResource -> {
-            FluentFile.writerOf(super.getOutputPath(dtoResource.getPackageName())).write(dtoResource.getResourceName(),
-                    Extension.json(), dtoResource.getResource());
-        });
-
         return true;
     }
 }
